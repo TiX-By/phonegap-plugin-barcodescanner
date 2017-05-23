@@ -953,147 +953,128 @@ parentViewController:(UIViewController*)parentViewController
     return self.overlayView;
 }
 
+//--------------------------------------------------------------------------
 - (UIView*)buildOverlayView {
-    
+
     if ( nil != self.alternateXib )
     {
         return [self buildOverlayViewFromXib];
     }
     CGRect bounds = self.view.bounds;
     bounds = CGRectMake(0, 0, bounds.size.width, bounds.size.height);
-    
+
     UIView* overlayView = [[UIView alloc] initWithFrame:bounds];
     overlayView.autoresizesSubviews = YES;
     overlayView.autoresizingMask    = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     overlayView.opaque              = NO;
-    
-    CDCoverView *coverView = [[CDCoverView alloc]init];
-    coverView.frame = overlayView.bounds;
-    coverView.backgroundColor = [UIColor clearColor];
-    coverView.opaque = NO;
-    [overlayView addSubview:coverView];
-    
-    NSURL *thisBundleURL = [[NSBundle mainBundle] URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"];
-    NSBundle *thisBundle = [NSBundle bundleWithURL:thisBundleURL];
-    
-    NSString *imagePath = [thisBundle pathForResource:@"logo-white" ofType:@"png"];
-    UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
 
-    
+    CDCoverView *coverView = [[CDCoverView alloc]init];
+        coverView.frame = overlayView.bounds;
+        coverView.backgroundColor = [UIColor clearColor];
+        coverView.opaque = NO;
+        [overlayView addSubview:coverView];
+
     UIToolbar* toolbar = [[UIToolbar alloc] init];
-    toolbar.barStyle = UIBarStyleBlackTranslucent;
-    toolbar.tintColor = [UIColor whiteColor];
-    toolbar.alpha = 0.7;
     toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-    
+
     id cancelButton = [[[UIBarButtonItem alloc]
-                        initWithTitle:@"cancel" style:UIBarButtonItemStylePlain target:(id)self action:@selector(cancelButtonPressed:)] autorelease];
-    [cancelButton setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:
-                                        [UIFont fontWithName:@"HelveticaNeue-Light" size:20.0], NSFontAttributeName,
-                                        [UIColor whiteColor], NSForegroundColorAttributeName,
-                                        nil] forState:UIControlStateNormal];
-    
-    
+                       initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
+                       target:(id)self
+                       action:@selector(cancelButtonPressed:)
+                       ] autorelease];
+
+
     id flexSpace = [[[UIBarButtonItem alloc]
-                     initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
-                     target:nil
-                     action:nil
-                     ] autorelease];
-    
+                    initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                    target:nil
+                    action:nil
+                    ] autorelease];
+
     id flipCamera = [[[UIBarButtonItem alloc]
-                      initWithBarButtonSystemItem:UIBarButtonSystemItemCamera
-                      target:(id)self
-                      action:@selector(flipCameraButtonPressed:)
-                      ] autorelease];
-    
+                       initWithBarButtonSystemItem:UIBarButtonSystemItemCamera
+                       target:(id)self
+                       action:@selector(flipCameraButtonPressed:)
+                       ] autorelease];
+
     NSMutableArray *items;
-    
+
 #if USE_SHUTTER
     id shutterButton = [[[UIBarButtonItem alloc]
-                         initWithBarButtonSystemItem:UIBarButtonSystemItemCamera
-                         target:(id)self
-                         action:@selector(shutterButtonPressed)
-                         ] autorelease];
-    
+                        initWithBarButtonSystemItem:UIBarButtonSystemItemCamera
+                        target:(id)self
+                        action:@selector(shutterButtonPressed)
+                        ] autorelease];
+
     if (_processor.isShowFlipCameraButton) {
-        items = [NSMutableArray arrayWithObjects:flexSpace, cancelButton, flexSpace, flipCamera, shutterButton, nil];
+      items = [NSMutableArray arrayWithObjects:flexSpace, cancelButton, flexSpace, flipCamera, shutterButton, nil];
     } else {
-        items = [NSMutableArray arrayWithObjects:flexSpace, cancelButton, flexSpace, shutterButton, nil];
+      items = [NSMutableArray arrayWithObjects:flexSpace, cancelButton, flexSpace, shutterButton, nil];
     }
 #else
     if (_processor.isShowFlipCameraButton) {
-        items = [@[flexSpace, cancelButton, flexSpace, flipCamera] mutableCopy];
+      items = [@[flexSpace, cancelButton, flexSpace, flipCamera] mutableCopy];
     } else {
-        items = [@[flexSpace, cancelButton, flexSpace] mutableCopy];
+      items = [@[flexSpace, cancelButton, flexSpace] mutableCopy];
     }
 #endif
-    
+
     if (_processor.isShowTorchButton && !_processor.isFrontCamera) {
-        AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
-        if ([device hasTorch] && [device hasFlash]) {
-            NSURL *bundleURL = [[NSBundle mainBundle] URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"];
-            NSBundle *bundle = [NSBundle bundleWithURL:bundleURL];
-            NSString *imagePath = [bundle pathForResource:@"torch" ofType:@"png"];
-            UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
-            
-            id torchButton = [[[UIBarButtonItem alloc]
-                               initWithImage:image
-                               style:UIBarButtonItemStylePlain
-                               target:(id)self
-                               action:@selector(torchButtonPressed:)
-                               ] autorelease];
-            
-            [items insertObject:torchButton atIndex:0];
-        }
+      AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+      if ([device hasTorch] && [device hasFlash]) {
+        NSURL *bundleURL = [[NSBundle mainBundle] URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"];
+        NSBundle *bundle = [NSBundle bundleWithURL:bundleURL];
+        NSString *imagePath = [bundle pathForResource:@"torch" ofType:@"png"];
+        UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+
+        id torchButton = [[[UIBarButtonItem alloc]
+                           initWithImage:image
+                                   style:UIBarButtonItemStylePlain
+                                  target:(id)self
+                                  action:@selector(torchButtonPressed:)
+                           ] autorelease];
+
+      [items insertObject:torchButton atIndex:0];
     }
-    
+  }
+
     toolbar.items = items;
-    
+
     bounds = overlayView.bounds;
-    
+
     [toolbar sizeToFit];
     CGFloat toolbarHeight  = [toolbar frame].size.height;
     CGFloat rootViewHeight = CGRectGetHeight(bounds);
     CGFloat rootViewWidth  = CGRectGetWidth(bounds);
     CGRect  rectArea       = CGRectMake(0, rootViewHeight - toolbarHeight, rootViewWidth, toolbarHeight);
     [toolbar setFrame:rectArea];
-    
+
     [overlayView addSubview: toolbar];
-    
+
     UIImage* reticleImage = [self buildReticleImage];
     UIView* reticleView = [[[UIImageView alloc] initWithImage:reticleImage] autorelease];
     CGFloat minAxis = MIN(rootViewHeight, rootViewWidth);
-    
+
     rectArea = CGRectMake(
-                          (CGFloat) (0.5 * (rootViewWidth  - minAxis)),
-                          (CGFloat) (0.5 * (rootViewHeight - minAxis)),
-                          minAxis,
-                          minAxis
-                          );
-    
+        (CGFloat) (0.5 * (rootViewWidth  - minAxis)),
+        (CGFloat) (0.5 * (rootViewHeight - minAxis)),
+        minAxis,
+        minAxis
+    );
+
     [reticleView setFrame:rectArea];
-    
+
     reticleView.opaque           = NO;
     reticleView.contentMode      = UIViewContentModeScaleAspectFit;
     reticleView.autoresizingMask = (UIViewAutoresizing) (0
-                                                         | UIViewAutoresizingFlexibleLeftMargin
-                                                         | UIViewAutoresizingFlexibleRightMargin
-                                                         | UIViewAutoresizingFlexibleTopMargin
-                                                         | UIViewAutoresizingFlexibleBottomMargin)
+        | UIViewAutoresizingFlexibleLeftMargin
+        | UIViewAutoresizingFlexibleRightMargin
+        | UIViewAutoresizingFlexibleTopMargin
+        | UIViewAutoresizingFlexibleBottomMargin)
     ;
-    
+
     [overlayView addSubview: reticleView];
-    rectArea = CGRectMake(
-                          (CGFloat) (0.15 * (rootViewWidth  - minAxis)),
-                          (CGFloat) (0.05 * (rootViewHeight - minAxis)),
-                          minAxis,
-                          130.0f
-                          );
-    UIImageView *logo = [[UIImageView new] initWithImage:image];
-    logo.contentMode = UIViewContentModeScaleAspectFit;
-    logo.frame = rectArea;
-    [overlayView addSubview:logo];
-    
+
+
     return overlayView;
 }
 
